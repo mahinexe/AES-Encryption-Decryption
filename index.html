@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AES Encryption &amp; Decryption</title>
+<meta name="description" content="Client-side AES-GCM encryption and decryption. Your data is processed locally in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('aes-theme')||'dark'}catch(e){}</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="bg" aria-hidden="true"></div>
+
+<header class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+  <div class="flex min-w-0 items-center gap-3">
+    <svg class="h-9 w-9 shrink-0 accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5l-8-3Z"/><rect x="9" y="10.5" width="6" height="5" rx="1"/><path d="M10.5 10.5V9a1.5 1.5 0 0 1 3 0v1.5"/></svg>
+    <div class="min-w-0">
+      <p class="truncate text-lg font-bold leading-tight">AES Encryption &amp; Decryption</p>
+      <p class="hidden truncate text-xs muted sm:block">Secure client-side AES-GCM encryption utility</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="glass hidden items-center gap-2 px-3 py-1.5 text-xs sm:flex"><span class="h-2 w-2 rounded-full bg-green-500" aria-hidden="true"></span>Local Processing</span>
+    <button id="themeBtn" class="btn btn-sm" type="button" aria-label="Toggle light and dark theme"><span id="themeIcon" aria-hidden="true">☾</span><span id="themeLabel" class="hidden sm:inline">Dark</span></button>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl space-y-8 px-4 pb-12 sm:px-6">
+  <section class="pt-4 text-center sm:pt-8">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-5xl">AES Encryption &amp; Decryption</h1>
+    <p class="mx-auto mt-3 max-w-xl muted">Encrypt and decrypt your data locally using authenticated AES-GCM. Your sensitive information never leaves your browser.</p>
+    <ul class="mt-4 flex flex-wrap justify-center gap-2 text-xs mono">
+      <li class="glass px-3 py-1">AES-GCM</li><li class="glass px-3 py-1">Authenticated</li><li class="glass px-3 py-1">Base64</li><li class="glass px-3 py-1">Client-Side</li>
+    </ul>
+  </section>
+
+  <div class="seg glass mx-auto flex max-w-md gap-1 p-1" role="tablist" aria-label="Mode">
+    <button id="tabEnc" role="tab" aria-selected="true" aria-controls="encPanel" class="flex-1 rounded-xl px-4 py-3 font-semibold" type="button">🔒 Encrypt</button>
+    <button id="tabDec" role="tab" aria-selected="false" aria-controls="decPanel" class="flex-1 rounded-xl px-4 py-3 font-semibold" type="button">🔓 Decrypt</button>
+  </div>
+
+  <div id="workspace" class="grid gap-6 lg:grid-cols-[1fr_20rem]">
+    <div class="min-w-0 space-y-6">
+      <!-- ENCRYPT -->
+      <section id="encPanel" role="tabpanel" class="glass panel space-y-5 p-5 sm:p-7" aria-labelledby="tabEnc">
+        <div><h2 class="text-xl font-semibold">Encryption</h2><p class="muted text-sm">Convert your plaintext into authenticated AES-GCM ciphertext.</p></div>
+        <fieldset>
+          <legend class="mb-2 text-sm font-medium">AES key size</legend>
+          <div id="sizes" class="grid grid-cols-3 gap-3" role="radiogroup" aria-label="AES key size">
+            <button type="button" role="radio" aria-checked="false" data-size="128" class="size-card"><span class="block font-semibold">AES-128</span><span class="text-xs muted">128-bit</span></button>
+            <button type="button" role="radio" aria-checked="false" data-size="192" class="size-card"><span class="block font-semibold">AES-192</span><span class="text-xs muted">192-bit</span></button>
+            <button type="button" role="radio" aria-checked="true" data-size="256" class="size-card"><span class="block font-semibold">AES-256</span><span class="text-xs muted">256-bit</span></button>
+          </div>
+          <p id="sizeNote" class="mt-2 text-sm muted">AES-256 provides the largest supported key size.</p>
+        </fieldset>
+        <form id="encForm" class="space-y-4" novalidate>
+          <div>
+            <div class="mb-1 flex items-center justify-between gap-2">
+              <label for="plain" class="text-sm font-medium">Plaintext</label>
+              <button type="button" id="clearPlain" class="btn btn-sm">Clear</button>
+            </div>
+            <textarea id="plain" class="field min-h-[11rem] resize-y" rows="7" placeholder="Enter the text you want to encrypt..." spellcheck="false" autocomplete="off"></textarea>
+            <p id="count" class="mt-1 text-xs muted" aria-live="off">0 characters</p>
+          </div>
+          <div id="encErr" class="err hidden" role="alert"></div>
+          <button id="encBtn" type="submit" class="btn btn-primary w-full">🔒 Encrypt Data</button>
+        </form>
+      </section>
+
+      <!-- DECRYPT -->
+      <section id="decPanel" role="tabpanel" class="glass panel hidden space-y-5 p-5 sm:p-7" aria-labelledby="tabDec">
+        <div><h2 class="text-xl font-semibold">Decryption</h2><p class="muted text-sm">Provide the Base64 ciphertext, nonce, and AES key to recover the original plaintext.</p></div>
+        <form id="decForm" class="space-y-4" novalidate>
+          <div>
+            <div class="mb-1 flex items-center justify-between gap-2">
+              <label for="ct" class="text-sm font-medium">Encrypted Text</label>
+              <span class="flex gap-2"><button type="button" id="pasteCt" class="btn btn-sm">Paste</button><button type="button" id="clearCt" class="btn btn-sm">Clear</button></span>
+            </div>
+            <textarea id="ct" class="field mono min-h-[8rem] resize-y" rows="5" placeholder="Paste Base64 encrypted text here..." spellcheck="false" autocomplete="off"></textarea>
+          </div>
+          <div>
+            <label for="iv" class="mb-1 block text-sm font-medium">Nonce (IV)</label>
+            <input id="iv" class="field mono" type="text" placeholder="Paste Base64 nonce here..." spellcheck="false" autocomplete="off">
+          </div>
+          <div>
+            <label for="key" class="mb-1 block text-sm font-medium">Encryption Key</label>
+            <div class="flex gap-2">
+              <input id="key" class="field mono" type="password" placeholder="Paste Base64 encryption key here..." spellcheck="false" autocomplete="off">
+              <button type="button" id="toggleKeyIn" class="btn" aria-pressed="false">Show</button>
+            </div>
+          </div>
+          <div id="decErr" class="err hidden" role="alert"></div>
+          <button id="decBtn" type="submit" class="btn btn-primary w-full">🔓 Decrypt Data</button>
+        </form>
+      </section>
+
+      <!-- ENCRYPT RESULT -->
+      <section id="encResult" class="glass panel hidden space-y-5 p-5 sm:p-7" aria-live="polite">
+        <div><h2 class="text-xl font-semibold text-green-500">✓ Encryption Successful</h2><p class="muted text-sm">Your data has been encrypted successfully. Keep the encryption key safe.</p></div>
+        <div class="space-y-4">
+          <article>
+            <div class="mb-1 flex items-center justify-between gap-2"><h3 class="font-semibold">Encrypted Text</h3><button class="btn btn-sm" type="button" data-copy="rCt">Copy</button></div>
+            <p class="text-xs muted mb-1">Base64 ciphertext</p>
+            <div id="rCt" class="out" tabindex="0"></div>
+          </article>
+          <article>
+            <div class="mb-1 flex items-center justify-between gap-2"><h3 class="font-semibold">Nonce</h3><button class="btn btn-sm" type="button" data-copy="rIv">Copy</button></div>
+            <div id="rIv" class="out" tabindex="0"></div>
+            <p class="mt-1 text-xs muted">The nonce is required during decryption and does not need to be secret.</p>
+          </article>
+          <article>
+            <div class="mb-1 flex items-center justify-between gap-2"><h3 class="font-semibold">Encryption Key</h3><span class="flex gap-2"><button class="btn btn-sm" type="button" id="toggleKeyOut" aria-pressed="false">Show</button><button class="btn btn-sm" type="button" data-copy="key">Copy</button></span></div>
+            <div id="rKey" class="out" tabindex="0" aria-label="Encryption key, hidden"></div>
+            <p class="warn mt-2">⚠ Keep this key secret. Anyone with the key can decrypt your data.</p>
+          </article>
+        </div>
+        <dl id="stats" class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4"></dl>
+        <div class="flex flex-wrap gap-2">
+          <button id="copyAll" class="btn btn-primary !min-h-[44px] flex-1 sm:flex-none" type="button">Copy All</button>
+          <button id="dlJson" class="btn" type="button">Download JSON</button>
+          <button id="dlTxt" class="btn" type="button">Download TXT</button>
+          <button id="again" class="btn" type="button">Encrypt Another</button>
+        </div>
+      </section>
+
+      <!-- DECRYPT RESULT -->
+      <section id="decResult" class="glass panel hidden space-y-4 p-5 sm:p-7" aria-live="polite">
+        <h2 class="text-xl font-semibold text-green-500">✓ Decryption Successful</h2>
+        <div>
+          <label for="out" class="mb-1 block text-sm font-medium">Decrypted Text</label>
+          <textarea id="out" class="field min-h-[10rem] resize-y" rows="7" readonly></textarea>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="copyOut" class="btn btn-primary !min-h-[44px]" type="button">Copy Decrypted Text</button>
+          <button id="dlOut" class="btn" type="button">Download</button>
+        </div>
+      </section>
+    </div>
+
+    <aside class="min-w-0 space-y-6">
+      <div id="drop" class="glass space-y-3 p-5">
+        <h2 class="font-semibold">Import Encryption Data</h2>
+        <p class="text-sm muted">Load a previously exported JSON file. You can also drag and drop it anywhere on this page.</p>
+        <input id="file" type="file" accept=".json,application/json" class="sr-only">
+        <label for="file" class="btn w-full cursor-pointer">Choose JSON file</label>
+        <button id="clearAll" class="btn w-full" type="button">Clear Workspace</button>
+      </div>
+      <div class="glass space-y-2 p-5">
+        <h2 class="font-semibold">🔐 Security Notice</h2>
+        <p class="text-sm muted">All encryption and decryption are performed locally in your browser.</p>
+        <p class="text-sm muted">Your plaintext, ciphertext, AES key, and nonce are not uploaded to a server.</p>
+        <p class="text-sm font-medium">Keep your AES key private.</p>
+      </div>
+      <div class="glass p-5">
+        <h2 class="mb-3 font-semibold">Technical details</h2>
+        <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+          <dt class="muted">Algorithm</dt><dd class="mono text-right">AES-GCM</dd>
+          <dt class="muted">Authentication tag</dt><dd class="mono text-right">128-bit</dd>
+          <dt class="muted">Encoding</dt><dd class="mono text-right">UTF-8</dd>
+          <dt class="muted">Output</dt><dd class="mono text-right">Base64</dd>
+          <dt class="muted">Key sizes</dt><dd class="mono text-right">128 / 192 / 256-bit</dd>
+          <dt class="muted">Nonce size</dt><dd class="mono text-right">96-bit / 12 bytes</dd>
+        </dl>
+      </div>
+    </aside>
+  </div>
+
+  <section class="glass p-5 sm:p-7">
+    <details>
+      <summary class="flex items-center justify-between font-semibold"><span>How AES Encryption Works</span><span class="muted" aria-hidden="true">+</span></summary>
+      <div class="mt-4 space-y-3 text-sm muted">
+        <p><strong class="text-[color:var(--tx)]">AES</strong> — Advanced Encryption Standard.</p>
+        <p><strong class="text-[color:var(--tx)]">GCM</strong> — Galois/Counter Mode, which provides authenticated encryption and detects tampering.</p>
+        <p><strong class="text-[color:var(--tx)]">Nonce</strong> — A unique 12-byte value required for each encryption. It does not need to be secret and is stored with the ciphertext.</p>
+        <p><strong class="text-[color:var(--tx)]">Key</strong> — The secret value required to encrypt and decrypt the data. It must remain secret.</p>
+        <p><strong class="text-[color:var(--tx)]">Base64</strong> — A text representation used to safely display binary encryption data.</p>
+        <p>Without the correct key and nonce, the ciphertext cannot normally be decrypted successfully.</p>
+        <p>AES-GCM authenticates the ciphertext, so decryption fails if the key, nonce, ciphertext, or authentication tag is incorrect or has been modified.</p>
+      </div>
+    </details>
+  </section>
+</main>
+
+<footer class="mx-auto max-w-6xl border-t px-4 py-6 text-center text-sm sm:px-6" style="border-color:var(--bd)">
+  <p class="font-semibold">AES Encryption &amp; Decryption</p>
+  <p class="muted">Secure client-side AES-GCM utility</p>
+  <p class="mono text-xs muted">AES-GCM • 128-bit tag • Base64</p>
+  <p class="mt-2 text-xs muted">
+  Created and Developed by 
+  <a href="https://mahinexe.vercel.app/" target="_blank" rel="noopener noreferrer" class="font-medium" style="color:var(--tx); text-decoration: none;">
+    Mohammodullah Al Mahin
+  </a>
+</p>
+</footer>
+
+<div id="toasts" class="fixed inset-x-3 bottom-3 z-50 flex flex-col items-center gap-2 sm:inset-x-auto sm:right-4 sm:items-end" aria-live="polite" role="status"></div>
+<script src="script.js"></script>
+</body>
+</html>
+  
