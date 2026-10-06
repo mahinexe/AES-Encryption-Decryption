@@ -19,6 +19,16 @@ There is no backend, account system, database, or build process. Encryption and 
 
 > **Important:** This tool does not store or recover encryption keys. If you lose the key, the encrypted data cannot be decrypted.
 
+## Screenshots
+
+### Encryption
+
+![AES encryption interface](./encyption.png)
+
+### Decryption
+
+![AES decryption interface](./decryption.png)
+
 ## Features
 
 - AES-128, AES-192, and AES-256 encryption
